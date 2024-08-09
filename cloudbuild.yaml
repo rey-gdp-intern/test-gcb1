@@ -22,29 +22,26 @@ steps:
       - "docker-build"
 
   - id: deploy-to-eks
-    name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
+    name: 'alpine'
+    entrypoint: 'sh'
     args:
       - '-c'
       - |
-        # Install AWS CLI
-        echo "Installing AWS CLI..."
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
-        
+        # Install necessary packages
+        apk add --no-cache curl bash aws-cli kubectl
+
         # Setup AWS credentials
         mkdir -p ~/.aws
         echo "[default]" > ~/.aws/credentials
-        echo "aws_access_key_id = $$AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
-        echo "aws_secret_access_key = $$AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+        echo "aws_access_key_id = $${_AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
+        echo "aws_secret_access_key = $${_AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
 
         echo "[default]" > ~/.aws/config
         echo "region = $${_AWS_REGION}" >> ~/.aws/config
         echo "output = json" >> ~/.aws/config
 
-        # Update kubeconfig
-        aws eks update-kubeconfig --name $${_CLUSTER_AWS} --region $${_AWS_REGION}
+        # Update kubeconfig to connect to EKS
+        aws eks update-kubeconfig --name $${_CLUSTER} --region $${_AWS_REGION}
 
         # Determine the correct Kubernetes manifest to use based on the branch name
         if [[ "$${BRANCH_NAME}" == "main" || "$${BRANCH_NAME}" == "master" ]]; then
@@ -61,7 +58,7 @@ steps:
           cp ./k8s/develop.yml ./k8s/deployment.yml
         fi
 
-        # Replace placeholders in the Kubernetes deployment manifest
+        # Update deployment manifest with the current build details
         sed -i "s|<PROJECT_NAME>|$${REPO_NAME}|g" ./k8s/deployment.yml
         sed -i "s|<VERSION>|$${SHORT_SHA}|g" ./k8s/deployment.yml
         sed -i "s|<IMAGE_NAME>|$${_REGISTRY_URL}/$${_IMAGE_NAME}:$${SHORT_SHA}|g" ./k8s/deployment.yml
