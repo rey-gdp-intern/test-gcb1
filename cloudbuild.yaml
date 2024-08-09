@@ -32,16 +32,22 @@ steps:
 
         # Setup AWS credentials
         mkdir -p ~/.aws
-        echo "[default]" > ~/.aws/credentials
-        echo "aws_access_key_id = $${_AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
-        echo "aws_secret_access_key = $${_AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
-
         echo "[default]" > ~/.aws/config
-        echo "region = $${_AWS_REGION}" >> ~/.aws/config
+        echo "region = us-east-1" >> ~/.aws/config
         echo "output = json" >> ~/.aws/config
+        echo "[profile gl-exploration]" >> ~/.aws/config
+        echo "role_arn = ${_AWS_ROLE_ARN}" >> ~/.aws/config
+        echo "source_profile = default" >> ~/.aws/config
+        echo "skip_region_validation = true" >> ~/.aws/config
+        echo "[default]" > ~/.aws/credentials
+        echo "aws_access_key_id = $${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
+        echo "aws_secret_access_key = $${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
+        echo "[gl-exploration]" >> ~/.aws/credentials
+        echo "aws_access_key_id = $${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
+        echo "aws_secret_access_key = $${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
 
         # Update kubeconfig to connect to EKS
-        aws eks update-kubeconfig --name $${_CLUSTER} --region $${_AWS_REGION}
+        aws eks update-kubeconfig --name ${_AWS_CLUSTER} --region ${_AWS_REGION}
 
         # Determine the correct Kubernetes manifest to use based on the branch name
         if [[ "$${BRANCH_NAME}" == "main" || "$${BRANCH_NAME}" == "master" ]]; then
@@ -79,8 +85,9 @@ substitutions:
   _ZONE: asia-southeast2-a
   _IMAGE_NAME: '${_PROJECT}-${REPO_NAME}-${BRANCH_NAME}'
   _PORT: '3000'
-  _CLUSTER_AWS: sandbox-intern
+  _AWS_CLUSTER: sandbox-intern
   _AWS_REGION: us-east-1
+  _AWS_ROLE_ARN: arn:aws:iam::302546992452:user/glair-exploration-rey-intern
 
 availableSecrets:
   secretManager:
