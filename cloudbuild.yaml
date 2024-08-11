@@ -44,7 +44,7 @@ steps:
         echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
         echo "[gl-exploration]" >> ~/.aws/credentials
         echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
-        echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials 
+        echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
 
         aws configure list
 
@@ -70,17 +70,14 @@ steps:
           cp ./k8s/develop.yml ./k8s/deployment.yml
         else
           cp ./k8s/develop.yml ./k8s/deployment.yml
-        fi  
+        fi
 
         # Update deployment manifest with the current build details
         sed -i "s|<PROJECT_NAME>|${REPO_NAME}|g" ./k8s/deployment.yml
         sed -i "s|<VERSION>|${SHORT_SHA}|g" ./k8s/deployment.yml
         sed -i "s|<IMAGE_NAME>|${_REGISTRY_URL}/${_IMAGE_NAME}:${SHORT_SHA}|g" ./k8s/deployment.yml
-        sed -i "s|<PORT>|${_PORT}|g" ./k8s/deployment.yml  
+        sed -i "s|<PORT>|${_PORT}|g" ./k8s/deployment.yml
 
-        # Check deployment file
-        kubectl get ns
-      
         # Check deployment file
         cat ./k8s/deployment.yml
 
